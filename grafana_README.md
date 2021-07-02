@@ -1,11 +1,17 @@
 官网：https://grafana.com/
 
 
+快速上手：
+    [中文文档](https://www.cnblogs.com/imyalost/p/9873641.html)
+
+
 环境设置：
+    
     https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/#dev-dependencies
 
 
 开发者指南：
+
     https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#test-grafana
 
 
