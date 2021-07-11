@@ -44,6 +44,9 @@ type SqlQueryResultTransformer interface {
 	GetConverterList() []sqlutil.StringConverter
 }
 
+type SqlDataSourceInfo interface {
+}
+
 type engineCacheType struct {
 	cache   map[int64]*xorm.Engine
 	updates map[int64]time.Time
@@ -154,10 +157,11 @@ const rowLimit = 1000000
 
 func (e *DataSourceInfo) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-	ch := make(chan backend.DataResponse, len(queryContext.Queries))
+
+	ch := make(chan backend.DataResponse, len(req.Queries))
 	var wg sync.WaitGroup
 	// Execute each query in a goroutine and wait for them to finish afterwards
-	for _, query := range queryContext.Queries {
+	for _, query := range req.Queries {
 		if query.Model.Get("rawSql").MustString() == "" {
 			continue
 		}
@@ -900,23 +904,36 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	return frame, nil
 }
 
-func SetupFillmode(query plugins.DataSubQuery, interval time.Duration, fillmode string) error {
-	query.Model.Set("fill", true)
-	query.Model.Set("fillInterval", interval.Seconds())
+func SetupFillmode(query *backend.DataQuery, interval time.Duration, fillmode string) error {
+	rawQueryProp := make(map[string]interface{})
+	queryBytes, err := query.JSON.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(queryBytes, &rawQueryProp)
+	if err != nil {
+		return err
+	}
+	rawQueryProp["fill"] = true
+	rawQueryProp["fillInterval"] = interval.Seconds()
+
 	switch fillmode {
 	case "NULL":
-		query.Model.Set("fillMode", "null")
+		rawQueryProp["fillMode"] = "null"
 	case "previous":
-		query.Model.Set("fillMode", "previous")
+		rawQueryProp["fillMode"] = "previous"
 	default:
-		query.Model.Set("fillMode", "value")
+		rawQueryProp["fillMode"] = "value"
 		floatVal, err := strconv.ParseFloat(fillmode, 64)
 		if err != nil {
 			return fmt.Errorf("error parsing fill value %v", fillmode)
 		}
-		query.Model.Set("fillValue", floatVal)
+		rawQueryProp["fillValue"] = floatVal
 	}
-
+	query.JSON, err = json.Marshal(rawQueryProp)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

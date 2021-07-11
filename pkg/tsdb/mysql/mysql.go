@@ -41,6 +41,7 @@ type Service struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	HTTPClientProvider   httpclient.Provider   `inject:""`
 	im                   instancemgmt.InstanceManager
+	logger               log.Logger
 }
 
 func characterEscape(s string, escapeChar string) string {
