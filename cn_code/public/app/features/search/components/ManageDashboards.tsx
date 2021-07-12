@@ -95,7 +95,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     <div className={styles.container}>
       <div className="page-action-bar">
         <div className="gf-form gf-form--grow m-r-2">
-          <FilterInput value={query.query} onChange={onQueryChange} placeholder={'Search dashboards by name'} />
+          <FilterInput value={query.query} onChange={onQueryChange} placeholder={'通过名字搜寻仪表盘'} />
         </div>
         <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
       </div>

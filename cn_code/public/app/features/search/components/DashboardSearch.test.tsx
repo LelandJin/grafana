@@ -40,7 +40,7 @@ describe('DashboardSearch', () => {
     locationService.push('/');
     setup();
 
-    await waitFor(() => screen.getByPlaceholderText('Search dashboards by name'));
+    await waitFor(() => screen.getByPlaceholderText('通过名字搜寻仪表盘'));
 
     expect(mockSearch).toHaveBeenCalledTimes(1);
     expect(mockSearch).toHaveBeenCalledWith({
@@ -60,7 +60,7 @@ describe('DashboardSearch', () => {
     locationService.push('/');
     setup();
 
-    const input = await screen.findByPlaceholderText('Search dashboards by name');
+    const input = await screen.findByPlaceholderText('通过名字搜寻仪表盘');
     await act((async () => {
       await fireEvent.input(input, { target: { value: 'Test' } });
       jest.runOnlyPendingTimers();
@@ -83,7 +83,7 @@ describe('DashboardSearch', () => {
     locationService.push('/');
     setup();
 
-    const message = await screen.findByText('No dashboards matching your query were found.');
+    const message = await screen.findByText('未找到符合您要求的仪表盘。');
     expect(message).toBeInTheDocument();
   });
 

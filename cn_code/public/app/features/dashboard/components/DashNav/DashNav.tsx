@@ -116,7 +116,7 @@ class DashNav extends PureComponent<Props> {
     if (canStar) {
       buttons.push(
         <DashNavButton
-          tooltip="Mark as favorite"
+          tooltip="添加到收藏夹"
           icon={isStarred ? 'favorite' : 'star'}
           iconType={isStarred ? 'mono' : 'default'}
           iconSize="lg"
@@ -131,7 +131,7 @@ class DashNav extends PureComponent<Props> {
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip="Share dashboard or panel"
+              tooltip="分享仪表盘或面板"
               icon="share-alt"
               iconSize="lg"
               onClick={() => {
@@ -153,9 +153,9 @@ class DashNav extends PureComponent<Props> {
   renderPlaylistControls() {
     return (
       <ButtonGroup key="playlist-buttons">
-        <ToolbarButton tooltip="Go to previous dashboard" icon="backward" onClick={this.onPlaylistPrev} narrow />
+        <ToolbarButton tooltip="返回上一仪表盘" icon="backward" onClick={this.onPlaylistPrev} narrow />
         <ToolbarButton onClick={this.onPlaylistStop}>Stop playlist</ToolbarButton>
-        <ToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={this.onPlaylistNext} narrow />
+        <ToolbarButton tooltip="前往下一个仪表盘" icon="forward" onClick={this.onPlaylistNext} narrow />
       </ButtonGroup>
     );
   }
@@ -179,7 +179,7 @@ class DashNav extends PureComponent<Props> {
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
     const tvButton = (
-      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
+      <ToolbarButton tooltip="循环查看模式" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
     );
 
     if (this.isPlaylistRunning()) {
@@ -191,12 +191,12 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (canEdit && !isFullscreen) {
-      buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
+      buttons.push(<ToolbarButton tooltip="添加面板" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
       buttons.push(
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
             <ToolbarButton
-              tooltip="Save dashboard"
+              tooltip="保存仪表盘"
               icon="save"
               onClick={() => {
                 showModal(SaveDashboardModalProxy, {
@@ -213,7 +213,7 @@ class DashNav extends PureComponent<Props> {
     if (snapshotUrl) {
       buttons.push(
         <ToolbarButton
-          tooltip="Open original dashboard"
+          tooltip="打开初始仪表盘"
           onClick={() => this.gotoSnapshotOrigin(snapshotUrl)}
           icon="link"
           key="button-snapshot"
@@ -223,7 +223,7 @@ class DashNav extends PureComponent<Props> {
 
     if (showSettings) {
       buttons.push(
-        <ToolbarButton tooltip="Dashboard settings" icon="cog" onClick={this.onOpenSettings} key="button-settings" />
+        <ToolbarButton tooltip="仪表盘设置" icon="cog" onClick={this.onOpenSettings} key="button-settings" />
       );
     }
 

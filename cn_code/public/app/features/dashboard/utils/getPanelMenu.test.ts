@@ -75,7 +75,7 @@ describe('getPanelMenu', () => {
               "text": "Create library panel",
             },
           ],
-          "text": "More...",
+          "text": "更多...",
           "type": "submenu",
         },
         Object {
@@ -152,7 +152,7 @@ describe('getPanelMenu', () => {
                 "text": "Toggle legend",
               },
             ],
-            "text": "More...",
+            "text": "更多...",
             "type": "submenu",
           },
         ]

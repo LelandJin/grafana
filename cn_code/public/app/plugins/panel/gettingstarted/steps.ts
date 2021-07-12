@@ -65,11 +65,11 @@ export const getSteps = (): SetupStep[] => [
     ],
   },
   {
-    heading: 'Setup complete!',
+    heading: '设置完成!',
     subheading:
-      'All necessary steps to use Grafana are done. Now tackle advanced steps or make the best use of this home dashboard – it is, after all, a fully customizable dashboard – and remove this panel.',
-    title: 'Advanced',
-    info: ' Manage your users and teams and add plugins. These steps are optional',
+      '已完成所有使用 Grafana 的必要步骤. 现在看看进阶步骤或者 试着用用首页仪表盘（一个完全可自定义的仪表盘）然后删除改面板。',
+    title: '进阶',
+    info: ' 管理您的用户、团队、插件。以下步骤为非必需步骤。',
     done: false,
     cards: [
       {

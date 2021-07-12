@@ -26,6 +26,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 
   async componentDidMount() {
     const { steps } = this.state;
+    // console.log(steps);
 
     const checkedStepsPromises: Array<Promise<SetupStep>> = steps.map(async (step: SetupStep) => {
       const checkedCardsPromises: Array<Promise<Card>> = step.cards.map((card: Card) => {

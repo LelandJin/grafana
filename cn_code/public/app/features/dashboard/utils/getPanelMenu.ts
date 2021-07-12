@@ -90,7 +90,7 @@ export function getPanelMenu(
 
   if (!panel.isEditing) {
     menu.push({
-      text: 'View',
+      text: '查看',
       iconClassName: 'eye',
       onClick: onViewPanel,
       shortcut: 'v',
@@ -99,7 +99,7 @@ export function getPanelMenu(
 
   if (dashboard.canEditPanel(panel) && !panel.isEditing) {
     menu.push({
-      text: 'Edit',
+      text: '编辑',
       iconClassName: 'edit',
       onClick: onEditPanel,
       shortcut: 'e',
@@ -107,7 +107,7 @@ export function getPanelMenu(
   }
 
   menu.push({
-    text: 'Share',
+    text: '分享',
     iconClassName: 'share-alt',
     onClick: onSharePanel,
     shortcut: 'p s',
@@ -115,7 +115,7 @@ export function getPanelMenu(
 
   if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({
-      text: 'Explore',
+      text: '探索',
       iconClassName: 'compass',
       shortcut: 'x',
       onClick: onNavigateToExplore,
@@ -127,26 +127,26 @@ export function getPanelMenu(
   // Only show these inspect actions for data plugins
   if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
     inspectMenu.push({
-      text: 'Data',
+      text: '数据',
       onClick: (e: React.MouseEvent<any>) => onInspectPanel('data'),
     });
 
     if (dashboard.meta.canEdit) {
       inspectMenu.push({
-        text: 'Query',
+        text: '问询',
         onClick: (e: React.MouseEvent<any>) => onInspectPanel('query'),
       });
     }
   }
 
   inspectMenu.push({
-    text: 'Panel JSON',
+    text: 'JSON面板',
     onClick: (e: React.MouseEvent<any>) => onInspectPanel('json'),
   });
 
   menu.push({
     type: 'submenu',
-    text: 'Inspect',
+    text: '检查',
     iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
     shortcut: 'i',
@@ -157,24 +157,24 @@ export function getPanelMenu(
 
   if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
-      text: 'Duplicate',
+      text: '镜像复制',
       onClick: onDuplicatePanel,
       shortcut: 'p d',
     });
 
     subMenu.push({
-      text: 'Copy',
+      text: '复制',
       onClick: onCopyPanel,
     });
 
     if (isPanelModelLibraryPanel(panel)) {
       subMenu.push({
-        text: 'Unlink library panel',
+        text: '解除链接库面板',
         onClick: onUnlinkLibraryPanel,
       });
     } else {
       subMenu.push({
-        text: 'Create library panel',
+        text: '创建库面板',
         onClick: onAddLibraryPanel,
       });
     }
@@ -206,7 +206,7 @@ export function getPanelMenu(
   if (!panel.isEditing && subMenu.length) {
     menu.push({
       type: 'submenu',
-      text: 'More...',
+      text: '更多...',
       iconClassName: 'cube',
       subMenu,
       onClick: onMore,
@@ -217,7 +217,7 @@ export function getPanelMenu(
     menu.push({ type: 'divider', text: '' });
 
     menu.push({
-      text: 'Remove',
+      text: '删除',
       iconClassName: 'trash-alt',
       onClick: onRemovePanel,
       shortcut: 'p r',

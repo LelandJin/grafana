@@ -17,7 +17,7 @@ export const WelcomeBanner: FC = () => {
     <div className={styles.container}>
       <h1 className={styles.title}>欢迎使用Grafana</h1>
       <div className={styles.help}>
-        <h3 className={styles.helpText}>寻求帮助?</h3>
+        <h3 className={styles.helpText}>需要帮助?</h3>
         <div className={styles.helpLinks}>
           {helpOptions.map((option, index) => {
             return (
