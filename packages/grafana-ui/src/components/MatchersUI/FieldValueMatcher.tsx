@@ -11,9 +11,10 @@ import {
   SelectableValue,
   GrafanaTheme2,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
 
@@ -70,7 +71,7 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
         value={reducer.current}
         options={reducer.options}
         onChange={onSetReducer}
-        placeholder="Select field reducer"
+        placeholder={t('grafana-ui.field-value-matcher.select-field-placeholder', 'Select field reducer')}
       />
       {opts.reducer && !isBool && (
         <>
@@ -78,7 +79,7 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
             value={comparisonOperationOptions.find((v) => v.value === opts.op)}
             options={comparisonOperationOptions}
             onChange={onChangeOp}
-            aria-label={'Comparison operator'}
+            aria-label={t('grafana-ui.field-value-matcher.operator-label', 'Comparison operator')}
             width={19}
           />
 

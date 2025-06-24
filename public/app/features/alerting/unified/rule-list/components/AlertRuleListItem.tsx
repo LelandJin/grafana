@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
-import { Labels, PromAlertingRuleState, RulesSourceApplication } from 'app/types/unified-alerting-dto';
+import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
 import { MetaText } from '../../components/MetaText';
@@ -20,10 +20,10 @@ import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
 import { DataSourceIcon } from './Namespace';
-import { RuleListIcon } from './RuleListIcon';
+import { RuleListIcon, RuleOperation } from './RuleListIcon';
 import { calculateNextEvaluationEstimate } from './util';
 
-interface AlertRuleListItemProps {
+export interface AlertRuleListItemProps {
   name: string;
   href: string;
   summary?: string;
@@ -44,6 +44,9 @@ interface AlertRuleListItemProps {
   contactPoint?: string;
   actions?: ReactNode;
   origin?: RulePluginOrigin;
+  operation?: RuleOperation;
+  // the grouped view doesn't need to show the location again – it's redundant
+  showLocation?: boolean;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -67,10 +70,14 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     labels,
     origin,
     actions = null,
+    operation,
+    showLocation = true,
   } = props;
 
+  const listItemAriaId = useId();
+
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -124,9 +131,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
 
   return (
     <ListItem
+      aria-labelledby={listItemAriaId}
       title={
         <Stack direction="row" alignItems="center">
-          <TextLink href={href} inline={false}>
+          <TextLink href={href} color="primary" inline={false} id={listItemAriaId}>
             {name}
           </TextLink>
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
@@ -137,14 +145,17 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         </Stack>
       }
       description={<Summary content={summary} error={error} />}
-      icon={<RuleListIcon state={state} health={health} isPaused={isPaused} />}
+      icon={<RuleListIcon state={state} health={health} isPaused={isPaused} operation={operation} />}
       actions={actions}
       meta={metadata}
     />
   );
 };
 
-type RecordingRuleListItemProps = Omit<AlertRuleListItemProps, 'summary' | 'state' | 'instancesCount' | 'contactPoint'>;
+export type RecordingRuleListItemProps = Omit<
+  AlertRuleListItemProps,
+  'summary' | 'state' | 'instancesCount' | 'contactPoint'
+>;
 
 export function RecordingRuleListItem({
   name,
@@ -159,9 +170,10 @@ export function RecordingRuleListItem({
   isPaused,
   origin,
   actions,
+  showLocation = true,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -173,7 +185,7 @@ export function RecordingRuleListItem({
     <ListItem
       title={
         <Stack direction="row" alignItems="center">
-          <TextLink href={href} inline={false}>
+          <TextLink color="primary" href={href} inline={false}>
             {name}
           </TextLink>
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
@@ -186,6 +198,50 @@ export function RecordingRuleListItem({
       description={<Summary error={error} />}
       icon={<RuleListIcon recording={true} health={health} isPaused={isPaused} />}
       actions={actions}
+      meta={metadata}
+    />
+  );
+}
+
+interface RuleOperationListItemProps {
+  name: string;
+  namespace: string;
+  group: string;
+  rulesSource?: RulesSourceIdentifier;
+  application?: RulesSourceApplication;
+  operation: RuleOperation;
+  showLocation?: boolean;
+}
+
+export function RuleOperationListItem({
+  name,
+  namespace,
+  group,
+  rulesSource,
+  application,
+  operation,
+  showLocation = true,
+}: RuleOperationListItemProps) {
+  const listItemAriaId = useId();
+
+  const metadata: ReactNode[] = [];
+  if (namespace && group && showLocation) {
+    metadata.push(
+      <Text color="secondary" variant="bodySmall">
+        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+      </Text>
+    );
+  }
+
+  return (
+    <ListItem
+      aria-labelledby={listItemAriaId}
+      title={
+        <Stack direction="row" alignItems="center">
+          <Text id={listItemAriaId}>{name}</Text>
+        </Stack>
+      }
+      icon={<RuleListIcon operation={operation} />}
       meta={metadata}
     />
   );
@@ -206,7 +262,7 @@ function Summary({ content, error }: SummaryProps) {
   }
   if (content) {
     return (
-      <Text variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary" truncate>
         {content}
       </Text>
     );
@@ -255,32 +311,36 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
 }
 
 interface UnknownRuleListItemProps {
-  rule: Rule;
+  ruleName: string;
   groupIdentifier: RuleGroupIdentifierV2;
+  ruleDefinition: Rule | RulerRuleDTO;
 }
 
-export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListItemProps) => {
+export const UnknownRuleListItem = ({ ruleName, groupIdentifier, ruleDefinition }: UnknownRuleListItemProps) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     const { namespace, groupName } = groupIdentifier;
     const ruleContext = {
-      name: rule.name,
+      name: ruleName,
       groupName,
       namespace: JSON.stringify(namespace),
       rulesSource: getGroupOriginName(groupIdentifier),
     };
     logError(new Error('unknown rule type'), ruleContext);
-  }, [rule, groupIdentifier]);
+  }, [ruleName, groupIdentifier]);
 
   return (
-    <Alert title={'Unknown rule type'} className={styles.resetMargin}>
+    <Alert
+      title={t('alerting.unknown-rule-list-item.title-unknown-rule-type', 'Unknown rule type')}
+      className={styles.resetMargin}
+    >
       <details>
         <summary>
           <Trans i18nKey="alerting.alert-rules.rule-definition">Rule definition</Trans>
         </summary>
         <pre>
-          <code>{JSON.stringify(rule, null, 2)}</code>
+          <code>{JSON.stringify(ruleDefinition, null, 2)}</code>
         </pre>
       </details>
     </Alert>
@@ -332,3 +392,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0,
   }),
 });
+
+export type RuleListItemCommonProps = Pick<
+  AlertRuleListItemProps,
+  Extract<keyof AlertRuleListItemProps, keyof RecordingRuleListItemProps>
+>;

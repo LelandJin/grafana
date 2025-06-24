@@ -5,6 +5,7 @@ import {
   identityOverrideProcessor,
   SelectableValue,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema';
 
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
@@ -34,8 +35,14 @@ export const StackingEditor = ({
       {context.isOverride && value?.mode && value?.mode !== StackingMode.None && (
         <Input
           type="text"
-          placeholder="Group"
-          suffix={<IconButton name="question-circle" tooltip="Name of the stacking group" tooltipPlacement="top" />}
+          placeholder={t('grafana-ui.stacking-builder.group', 'Group')}
+          suffix={
+            <IconButton
+              name="question-circle"
+              tooltip={t('grafana-ui.stacking-builder.group-tooltip', 'Name of the stacking group')}
+              tooltipPlacement="top"
+            />
+          }
           defaultValue={value?.group}
           onChange={(v) => {
             onChange({

@@ -1,17 +1,18 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
 import { usePrevious } from 'react-use';
 import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
 
 import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Spinner } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Spinner, useStyles2 } from '@grafana/ui';
 
 import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
 
-import { LogLine } from './LogLine';
+import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
 import { LogListModel } from './processing';
+import { LogLineVirtualization } from './virtualization';
 
 interface ChildrenProps {
   itemCount: number;
@@ -22,15 +23,18 @@ interface ChildrenProps {
 
 interface Props {
   children: (props: ChildrenProps) => ReactNode;
-  handleOverflow: (index: number, id: string, height: number) => void;
+  displayedFields: string[];
+  handleOverflow: (index: number, id: string, height?: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogListModel[];
+  onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
   setInitialScrollPosition: () => void;
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
   timeZone: string;
+  virtualization: LogLineVirtualization;
   wrapLogMessage: boolean;
 }
 
@@ -38,15 +42,18 @@ type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll' | 'loading';
 
 export const InfiniteScroll = ({
   children,
+  displayedFields,
   handleOverflow,
   loadMore,
   logs,
+  onClick,
   scrollElement,
   setInitialScrollPosition,
   showTime,
   sortOrder,
   timeRange,
   timeZone,
+  virtualization,
   wrapLogMessage,
 }: Props) => {
   const [infiniteLoaderState, setInfiniteLoaderState] = useState<InfiniteLoaderState>('idle');
@@ -57,6 +64,7 @@ export const InfiniteScroll = ({
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
+  const styles = useStyles2(getStyles, virtualization);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -132,24 +140,44 @@ export const InfiniteScroll = ({
     ({ index, style }: ListChildComponentProps) => {
       if (!logs[index] && infiniteLoaderState !== 'idle') {
         return (
-          <LogLineMessage style={style} onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}>
+          <LogLineMessage
+            style={style}
+            styles={styles}
+            onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}
+          >
             {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
           </LogLineMessage>
         );
       }
       return (
         <LogLine
+          displayedFields={displayedFields}
           index={index}
           log={logs[index]}
+          onClick={onClick}
           showTime={showTime}
           style={style}
+          styles={styles}
           variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
+          virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
           onOverflow={handleOverflow}
         />
       );
     },
-    [handleOverflow, infiniteLoaderState, logs, onLoadMore, showTime, sortOrder, wrapLogMessage]
+    [
+      displayedFields,
+      handleOverflow,
+      infiniteLoaderState,
+      logs,
+      onClick,
+      onLoadMore,
+      showTime,
+      sortOrder,
+      styles,
+      virtualization,
+      wrapLogMessage,
+    ]
   );
 
   const onItemsRendered = useCallback(

@@ -9,13 +9,15 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/urfave/cli/v2"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-
 	authlib "github.com/grafana/authlib/types"
+
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -27,11 +29,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
 func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
-	namespace := "default" // TODO... from command line
+	// Take namespace from command line
+	namespace := c.String("namespace")
+
 	ns, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return err
@@ -49,8 +54,10 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		},
 		LargeObjects: nil, // TODO... from config
 		Progress: func(count int, msg string) {
-			if count < 1 || time.Since(last) > time.Second {
-				fmt.Printf("[%4d] %s\n", count, msg)
+			const minInterval = time.Second
+			shouldPrint := count < 1 || time.Since(last) > minInterval
+			if shouldPrint {
+				logger.Info(fmt.Sprintf("[%4d] %s", count, msg))
 				last = time.Now()
 			}
 		},
@@ -64,8 +71,32 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	migrator := legacy.NewDashboardAccess(
 		legacysql.NewDatabaseProvider(sqlStore),
 		authlib.OrgNamespaceFormatter,
-		nil, provisioning, false, sort.ProvideService(),
+		nil, // no dashboards.Store
+		provisioning,
+		nil, // no librarypanels.Service
+		sort.ProvideService(),
 	)
+
+	if c.Bool("non-interactive") {
+		client, err := newUnifiedClient(cfg, sqlStore)
+		if err != nil {
+			return err
+		}
+
+		opts.Store = client
+		opts.BlobStore = client
+		rsp, err := migrator.Migrate(ctx, opts)
+		if err != nil {
+			msg := fmt.Sprintf("Failed to migrate legacy resources: %+v", err)
+			return cli.Exit(msg, 1)
+		}
+		logger.Info("Migrated legacy resources successfully in", time.Since(start))
+		if rsp != nil {
+			jj, _ := json.MarshalIndent(rsp, "", "  ")
+			logger.Info("Migration summary:", string(jj))
+		}
+		return nil
+	}
 
 	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
 	if err != nil {
@@ -129,7 +160,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		}
 
 		// Check the stats (eventually compare)
-		req := &resource.ResourceStatsRequest{
+		req := &resourcepb.ResourceStatsRequest{
 			Namespace: opts.Namespace,
 		}
 		for _, r := range opts.Resources {
@@ -196,14 +227,14 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 		Reg:      prometheus.NewPedanticRegistry(),
 		Authzc:   authlib.FixedAccessClient(true), // always true!
 		Docs:     nil,                             // document supplier
-	})
+	}, nil, nil)
 }
 
-func newParquetClient(file *os.File) (resource.BatchStoreClient, error) {
+func newParquetClient(file *os.File) (resourcepb.BulkStoreClient, error) {
 	writer, err := parquet.NewParquetWriter(file)
 	if err != nil {
 		return nil, err
 	}
-	client := parquet.NewBatchResourceWriterClient(writer)
+	client := parquet.NewBulkResourceWriterClient(writer)
 	return client, nil
 }

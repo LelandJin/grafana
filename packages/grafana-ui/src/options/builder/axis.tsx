@@ -5,6 +5,7 @@ import {
   SelectableValue,
   StandardEditorProps,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
 import { Field } from '../../components/Forms/Field';
@@ -162,7 +163,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
         }}
       />
       {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
-        <Field label="Log base">
+        <Field label={t('grafana-ui.axis-builder.log-base', 'Log base')}>
           <Select
             options={LOG_DISTRIBUTION_OPTIONS}
             value={log}
@@ -176,8 +177,9 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
         </Field>
       )}
       {type === ScaleDistribution.Symlog && (
-        <Field label="Linear threshold" style={{ marginBottom: 0 }}>
+        <Field label={t('grafana-ui.axis-builder.linear-threshold', 'Linear threshold')} style={{ marginBottom: 0 }}>
           <Input
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="1"
             value={value?.linearThreshold}
             onChange={(v) => {
